@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, week_nav %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Weekly Report HRGA{% endblock %}
+{% block heading_icon %}bi-speedometer2{% endblock %}
+{% block heading_subtitle %}{% if config.APP_ORG %}{{ config.APP_ORG }} · {% endif %}{{ week_label }}{% endblock %}
+{% block header_actions %}
+{{ week_nav('dashboard.index', week, week_label, prev_week, next_week, this_week) }}
+<a href="{{ url_for('dashboard.wa', week=week.isoformat()) }}" class="btn btn-primary btn-sm"><i class="bi bi-whatsapp me-1"></i>Report WA</a>
+{% endblock %}
+{% block content %}
+{% set k = d.kpi %}
+
+<div class="motivation-card mb-3" title="Arahkan kursor untuk menghentikan sementara">
+    <i class="bi bi-quote"></i>
+    <div class="marquee">
+        <span class="marquee-track">{{ d.motivation }}{% if d.motivation_author %} <small class="text-secondary ms-1">— {{ d.motivation_author }}</small>{% endif %}</span>
+    </div>
+</div>
+
+{% set kpis = [
+    ('Posisi open', k.open, 'Hold: ' ~ k.hold, 'bi-briefcase', 'primary', url_for('recruitment.index', status='OPEN')),
+    ('Join minggu ini', k.join, 'Req. baru: ' ~ k.new_req, 'bi-person-plus', 'info', url_for('onboard.index')),
+    ('Head count', k.headcount if k.headcount is not none else '-', ('per ' ~ (k.headcount_date|tgl_pendek)) if k.headcount_date else 'belum ada data', 'bi-diagram-3', 'primary', url_for('master.headcount')),
+    ('Kegiatan GA', k.ga, 'Biaya: ' ~ (k.ga_cost|rupiah), 'bi-tools', 'primary', url_for('ga.index', period='week', week=week.isoformat())),
+    ('GA selesai', k.ga_pct ~ '%', k.ga_done ~ ' dari ' ~ k.ga ~ ' kegiatan', 'bi-check2-circle', 'info', url_for('ga.index', period='week', week=week.isoformat())),
+    ('Scrap minggu ini', k.scrap_week|angka(2), 'Kumulatif: ' ~ (k.scrap_total|angka(2)) ~ ' kg', 'bi-recycle', 'primary', url_for('scrap.index')),
+    ('Issue open', k.issues_open, 'Overdue: ' ~ k.issues_overdue, 'bi-flag', 'danger' if k.issues_overdue else 'warning', url_for('issue.index')),
+    ('Site perlu perhatian', k.site_attention, 'Update site: ' ~ k.site_updates, 'bi-geo-alt', 'danger' if k.site_attention else 'info', url_for('site.index')),
+] %}
+<div class="row g-3 mb-4">
+    {% for label, value, sub, icon, color, link in kpis %}
+    <div class="col-6 col-xl-3">
+        <a href="{{ link }}" class="card dashboard-kpi-card text-reset">
+            <div class="card-body">
+                <div style="min-width: 0">
+                    <div class="dashboard-kpi-label">{{ label }}</div>
+                    <div class="dashboard-kpi-value">{{ value }}</div>
+                    <div class="small text-secondary text-truncate">{{ sub }}</div>
+                </div>
+                <div class="dashboard-kpi-icon dashboard-kpi-icon-{{ color }}"><i class="bi {{ icon }}"></i></div>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+{# ================= 1. RECRUITMENT & ONBOARDING ================= #}
+<div class="section-title">1. Recruitment &amp; Onboarding</div>
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-xxl-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-funnel me-2"></i>Pipeline posisi per stage</div>
+            <div class="table-responsive"><table class="table table-sm mb-0">
+                <thead><tr><th class="ps-3">Current Stage</th><th class="text-end">Open</th><th class="text-end pe-3">Hold</th></tr></thead>
+                <tbody>
+                {% for stage, open_, hold in d.pipeline %}
+                <tr><td class="ps-3">{{ stage }}</td><td class="text-end">{{ open_ }}</td><td class="text-end pe-3">{{ hold }}</td></tr>
+                {% endfor %}
+                </tbody>
+                <tfoot><tr class="fw-semibold"><td class="ps-3">TOTAL</td>
+                    <td class="text-end">{{ d.pipeline|sum(attribute=1) }}</td><td class="text-end pe-3">{{ d.pipeline|sum(attribute=2) }}</td></tr></tfoot>
+            </table></div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xxl-3">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-pie-chart me-2"></i>Status posisi</div>
+            <ul class="list-group list-group-flush">
+                {% for status, count in d.status_counts %}
+                <a href="{{ url_for('recruitment.index', status=status) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
+                    <span>{{ badge(status) }}</span><span>{{ count }}</span></a>
+                {% endfor %}
+                <li class="list-group-item d-flex justify-content-between fw-semibold"><span>TOTAL</span><span>{{ d.status_counts|sum(attribute=1) }}</span></li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-12 col-xxl-5">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-person-plus me-2"></i>Karyawan join minggu ini</div>
+            {% if d.joiners %}
+            <div class="table-responsive"><table class="table table-sm mb-0">
+                <thead><tr><th class="ps-3">Nama</th><th>Posisi</th><th>Tgl Join</th><th class="text-end pe-3">Onboarding</th></tr></thead>
+                <tbody>
+                {% for o in d.joiners %}{% set done, need = o.completeness %}
+                <tr><td class="ps-3"><a href="{{ url_for('onboard.edit', obj_id=o.id) }}">{{ o.name }}</a></td>
+                    <td>{{ o.position }}<div class="small text-secondary">{{ o.placement or '' }}</div></td>
+                    <td class="text-nowrap">{{ o.hire_date|tgl_pendek }}</td>
+                    <td class="text-end pe-3">{{ done }}/{{ need }}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table></div>
+            {% else %}
+            <div class="card-body text-secondary">Belum ada karyawan join di minggu ini.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-graph-up me-2"></i>Tren 8 minggu</div>
+            {% set trend_max = [d.trend|map(attribute='req')|max, d.trend|map(attribute='join')|max, 1]|max %}
+            <div class="table-responsive"><table class="table table-sm mb-0">
+                <thead><tr><th class="ps-3">Minggu</th><th>Awal</th><th>Req. baru</th><th class="pe-3">Join</th></tr></thead>
+                <tbody>
+                {% for t in d.trend %}
+                <tr class="{{ 'fw-semibold' if loop.last }}">
+                    <td class="ps-3">{{ t.label }}</td><td class="text-nowrap">{{ t.start|tgl_pendek }}</td>
+                    <td><div class="d-flex align-items-center gap-2"><span style="width: 1.5rem">{{ t.req }}</span>
+                        <div class="mini-bar flex-grow-1"><span style="width: {{ (t.req * 100 / trend_max)|round }}%"></span></div></div></td>
+                    <td class="pe-3"><div class="d-flex align-items-center gap-2"><span style="width: 1.5rem">{{ t.join }}</span>
+                        <div class="mini-bar bar-alt flex-grow-1"><span style="width: {{ (t.join * 100 / trend_max)|round }}%"></span></div></div></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-hourglass-split me-2"></i>Top 5 posisi open terlama</div>
+            {% if d.oldest %}
+            <div class="table-responsive"><table class="table table-sm mb-0">
+                <thead><tr><th class="ps-3">Position</th><th>Placement</th><th class="text-end pe-3">Umur (hr)</th></tr></thead>
+                <tbody>
+                {% for r in d.oldest %}
+                <tr><td class="ps-3"><a href="{{ url_for('recruitment.edit', obj_id=r.id) }}">{{ r.position }}</a></td>
+                    <td>{{ r.placement or '' }}</td><td class="text-end pe-3">{{ r.age_days }}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table></div>
+            {% else %}<div class="card-body text-secondary">Tidak ada posisi open.</div>{% endif %}
+        </div>
+    </div>
+</div>
+
+{# ================= 2. MANPOWER / HEAD COUNT ================= #}
+<div class="section-title">2. Manpower / Head Count{% if d.headcount %} <span class="text-lowercase fw-normal">· data per {{ d.headcount.date|tgl }}</span>{% endif %}</div>
+{% if d.headcount %}
+{% set hc = d.headcount %}
+{% set total = hc.total('entity') %}
+{% set mismatch = [] %}
+{% for g, _l in C.HEADCOUNT_GROUPS %}{% if hc.rows(g) and hc.total(g) != total %}{% set _ = mismatch.append(_l) %}{% endif %}{% endfor %}
+{% if mismatch %}
+<div class="alert alert-warning py-2 small"><i class="bi bi-exclamation-triangle me-1"></i>Total {{ mismatch|join(', ')|lower }} belum sama dengan head count entitas ({{ total }}).</div>
+{% endif %}
+<div class="row g-3 mb-4">
+    {% for g, label in C.HEADCOUNT_GROUPS %}
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-header d-flex"><span>{{ label }}</span><span>{{ hc.total(g) }}</span></div>
+            <ul class="list-group list-group-flush small">
+                {% for name, count in hc.rows(g) %}
+                <li class="list-group-item d-flex justify-content-between py-1"><span>{{ name }}</span>
+                    <span class="fw-semibold">{{ count }}{% if g == 'gender' and total %} <span class="text-secondary fw-normal">({{ (count * 100 / total)|round|int }}%)</span>{% endif %}</span></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card mb-4"><div class="card-body text-secondary">Belum ada data head count. <a href="{{ url_for('master.headcount_form') }}">Isi sekarang</a>.</div></div>
+{% endif %}
+
+{# ================= 3. GENERAL AFFAIR ================= #}
+<div class="section-title">3. General Affair</div>
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-xxl-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-tags me-2"></i>Per kategori</div>
+            <div class="table-responsive"><table class="table table-sm mb-0">
+                <thead><tr><th class="ps-3">Kategori</th><th class="text-end">Jumlah</th><th class="text-end pe-3">Biaya (Rp)</th></tr></thead>
+                <tbody>
+                {% for cat, count, cost in d.ga_by_category %}
+                <tr><td class="ps-3">{{ cat }}</td><td class="text-end">{{ count }}</td><td class="text-end pe-3">{{ cost|angka }}</td></tr>
+                {% endfor %}
+                </tbody>
+                <tfoot><tr class="fw-semibold"><td class="ps-3">TOTAL</td><td class="text-end">{{ k.ga }}</td><td class="text-end pe-3">{{ k.ga_cost|angka }}</td></tr></tfoot>
+            </table></div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xxl-3">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-check2-square me-2"></i>Per status</div>
+            <ul class="list-group list-group-flush">
+                {% for status, count in d.ga_by_status %}
+                <li class="list-group-item d-flex justify-content-between"><span>{{ badge(status) }}</span><span>{{ count }}</span></li>
+                {% endfor %}
+                <li class="list-group-item d-flex justify-content-between fw-semibold"><span>TOTAL</span><span>{{ k.ga }}</span></li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-12 col-xxl-5">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-calendar3 me-2"></i>Per hari</div>
+            <div class="table-responsive"><table class="table table-sm mb-0">
+                <thead><tr><th class="ps-3">Hari</th><th>Tanggal</th><th class="text-end">Kegiatan</th><th class="text-end">Selesai</th><th class="text-end">Belum</th><th class="text-end pe-3">Biaya</th></tr></thead>
+                <tbody>
+                {% for x in d.ga_by_day %}
+                <tr class="{{ 'text-secondary' if not x.count }}"><td class="ps-3">{{ x.hari }}</td><td class="text-nowrap">{{ x.date|tgl_pendek }}</td>
+                    <td class="text-end">{{ x.count }}</td><td class="text-end">{{ x.done }}</td><td class="text-end">{{ x.open }}</td>
+                    <td class="text-end pe-3">{{ x.cost|angka if x.cost else '' }}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table></div>
+        </div>
+    </div>
+</div>
+<div class="card mb-4">
+    <div class="card-header d-flex align-items-center"><span><i class="bi bi-list-task me-2"></i>Daftar kegiatan GA minggu ini</span>
+        <a href="{{ url_for('ga.new', next=request.full_path) }}" class="btn btn-primary btn-sm py-0"><i class="bi bi-plus-lg me-1"></i>Tambah</a></div>
+    {% if d.ga %}
+    <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+        <thead><tr><th class="ps-3">Tanggal</th><th>Kategori</th><th>Uraian kegiatan</th><th>Status</th><th class="text-end">Biaya (Rp)</th><th class="pe-3">Ket.</th></tr></thead>
+        <tbody>
+        {% for a in d.ga %}
+        <tr><td class="ps-3 text-nowrap">{{ a.date|tgl_pendek }}</td><td>{{ a.category or '' }}</td>
+            <td><a href="{{ url_for('ga.edit', obj_id=a.id, next=request.full_path) }}" class="fw-normal">{{ a.description }}</a></td>
+            <td>{{ badge(a.status) }}</td><td class="text-end">{{ a.cost|angka if a.cost else '' }}</td>
+            <td class="pe-3 small text-secondary">{{ a.note or '' }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% else %}<div class="card-body text-secondary">Belum ada kegiatan GA di minggu ini.</div>{% endif %}
+</div>
+
+{# ================= 4. SCRAP ================= #}
+<div class="section-title">4. Recapitulation Total Scrap (per week)</div>
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-recycle me-2"></i>Scrap minggu ini (kg)</div>
+            <div class="table-responsive"><table class="table table-sm mb-0">
+                <thead><tr><th class="ps-3">Hari</th><th>Tanggal</th><th class="text-end pe-3">Total weight (kg)</th></tr></thead>
+                <tbody>
+                <tr class="text-secondary"><td class="ps-3" colspan="2">Total s/d minggu lalu</td><td class="text-end pe-3">{{ d.scrap_before|angka(2) }}</td></tr>
+                {% for x in d.scrap_days %}
+                <tr class="{{ 'text-secondary' if not x.kg }}"><td class="ps-3">{{ x.hari }}</td><td class="text-nowrap">{{ x.date|tgl_pendek }}</td>
+                    <td class="text-end pe-3">{{ x.kg|angka(2) if x.kg else '-' }}</td></tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="fw-semibold"><td class="ps-3" colspan="2">Total minggu ini</td><td class="text-end pe-3">{{ d.scrap_week|angka(2) }}</td></tr>
+                    <tr class="fw-bold"><td class="ps-3" colspan="2">TOTAL SCRAP (kumulatif)</td><td class="text-end pe-3">{{ k.scrap_total|angka(2) }}</td></tr>
+                </tfoot>
+            </table></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Tren scrap 8 minggu (kg)</div>
+            {% set scrap_max = [d.scrap_trend|map(attribute='kg')|max, 1]|max %}
+            <div class="table-responsive"><table class="table table-sm mb-0">
+                <thead><tr><th class="ps-3">Minggu</th><th>Awal</th><th class="pe-3">Scrap (kg)</th></tr></thead>
+                <tbody>
+                {% for t in d.scrap_trend %}
+                <tr class="{{ 'fw-semibold' if loop.last }}"><td class="ps-3">{{ t.label }}</td><td class="text-nowrap">{{ t.start|tgl_pendek }}</td>
+                    <td class="pe-3"><div class="d-flex align-items-center gap-2"><span class="text-end" style="width: 4.5rem">{{ t.kg|angka(2) }}</span>
+                        <div class="mini-bar flex-grow-1"><span style="width: {{ (t.kg * 100 / scrap_max)|round }}%"></span></div></div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table></div>
+        </div>
+    </div>
+</div>
+
+{# ================= 5. SITE PROJECT ================= #}
+<div class="section-title">5. Update Kondisi Site Project / Branch</div>
+<div class="card mb-4">
+    <div class="card-header d-flex align-items-center"><span><i class="bi bi-geo-alt me-2"></i>Update site minggu ini</span>
+        <a href="{{ url_for('site.new', next=request.full_path) }}" class="btn btn-primary btn-sm py-0"><i class="bi bi-plus-lg me-1"></i>Tambah</a></div>
+    {% if d.sites %}
+    <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+        <thead><tr><th class="ps-3">Site / Project</th><th>Lokasi</th><th class="text-end">MP</th><th class="text-end">Progress</th><th>Status</th><th>Kondisi / Update</th><th>Kendala</th><th class="pe-3">PIC</th></tr></thead>
+        <tbody>
+        {% for s in d.sites %}
+        <tr><td class="ps-3"><a href="{{ url_for('site.edit', obj_id=s.id, next=request.full_path) }}">{{ s.site }}</a><div class="small text-secondary">{{ s.date|tgl_pendek }}</div></td>
+            <td>{{ s.location or '' }}</td><td class="text-end">{{ s.manpower if s.manpower is not none else '' }}</td>
+            <td class="text-end">{{ (s.progress ~ '%') if s.progress is not none else '' }}</td>
+            <td>{{ badge(s.status) }}</td><td class="small text-pre">{{ s.condition or '' }}</td>
+            <td class="small text-pre">{{ s.obstacle or '' }}</td><td class="pe-3">{{ s.pic or '' }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% else %}<div class="card-body text-secondary">Belum ada update site di minggu ini.</div>{% endif %}
+</div>
+
+{# ================= 6. ISSUE & ACTION PLAN ================= #}
+<div class="section-title">6. Issue &amp; Action Plan</div>
+<div class="card mb-3">
+    <div class="card-header d-flex align-items-center"><span><i class="bi bi-flag me-2"></i>Issue minggu ini &amp; yang masih open</span>
+        <a href="{{ url_for('issue.new', next=request.full_path) }}" class="btn btn-primary btn-sm py-0"><i class="bi bi-plus-lg me-1"></i>Tambah</a></div>
+    {% if d.issues %}
+    <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+        <thead><tr><th class="ps-3">Tanggal</th><th>Kategori</th><th>Issue</th><th>Action Plan</th><th>PIC</th><th>Target</th><th class="pe-3">Status</th></tr></thead>
+        <tbody>
+        {% for i in d.issues %}
+        <tr class="{{ 'table-danger' if i.overdue }}"><td class="ps-3 text-nowrap">{{ i.date|tgl_pendek }}</td><td>{{ i.category or '' }}</td>
+            <td class="small"><a href="{{ url_for('issue.edit', obj_id=i.id, next=request.full_path) }}">{{ i.issue }}</a></td>
+            <td class="small">{{ i.action_plan or '' }}</td><td>{{ i.pic or '' }}</td>
+            <td class="text-nowrap">{{ i.target_date|tgl_pendek }}{% if i.overdue %} <span class="badge text-bg-danger">Overdue</span>{% endif %}</td>
+            <td class="pe-3">{{ badge(i.status) }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% else %}<div class="card-body text-secondary">Tidak ada issue di minggu ini.</div>{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    // Teks motivasi berjalan dengan kecepatan tetap, apa pun panjangnya:
+    // durasi = jarak tempuh / kecepatan. Dihitung ulang saat ukuran layar berubah.
+    (function () {
+        const SPEED = 70;   // px per detik - nyaman dibaca
+        const track = document.querySelector(".marquee-track");
+        if (!track) {
+            return;
+        }
+        function setDuration() {
+            const seconds = Math.max(12, track.scrollWidth / SPEED);
+            track.style.setProperty("--marquee-duration", seconds.toFixed(1) + "s");
+        }
+        setDuration();
+        window.addEventListener("resize", setDuration);
+    })();
+</script>
+{% endblock %}

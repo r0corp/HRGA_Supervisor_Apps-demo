@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Daftar Pilihan{% endblock %}
+{% block heading %}Daftar Pilihan{% endblock %}
+{% block heading_icon %}bi-list-ul{% endblock %}
+{% block heading_subtitle %}Isi dropdown di form dan kelompok di dashboard (pengganti sheet "Daftar"){% endblock %}
+{% block content %}
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-collection me-2"></i>Jenis</div>
+            <div class="list-group list-group-flush">
+                {% for key, label in C.OPTION_KINDS.items() %}
+                <a href="{{ url_for('master.option_list', kind=key) }}" class="list-group-item list-group-item-action {{ 'active' if key == kind }}">{{ label }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-list-ol me-2"></i>{{ C.OPTION_KINDS[kind] }}</div>
+            <ul class="list-group list-group-flush">
+                {% for o in rows %}
+                <li class="list-group-item">
+                    <div class="d-flex align-items-center gap-2">
+                        <form method="post" action="{{ url_for('master.option_save') }}" class="d-flex gap-2 flex-grow-1">
+                            {{ csrf() }}<input type="hidden" name="kind" value="{{ kind }}"><input type="hidden" name="id" value="{{ o.id }}">
+                            <input type="text" name="value" value="{{ o.value }}" class="form-control form-control-sm" {{ 'readonly' if o.value in locked }}>
+                            {% if o.value not in locked %}
+                            <button class="btn btn-outline-secondary btn-sm" name="action" value="rename" title="Simpan nama"><i class="bi bi-check-lg"></i></button>
+                            {% endif %}
+                        </form>
+                        <form method="post" action="{{ url_for('master.option_save') }}" class="d-flex gap-1">
+                            {{ csrf() }}<input type="hidden" name="kind" value="{{ kind }}"><input type="hidden" name="id" value="{{ o.id }}">
+                            <button class="btn btn-outline-secondary btn-sm" name="action" value="up" title="Naik" {{ 'disabled' if loop.first }}><i class="bi bi-arrow-up"></i></button>
+                            <button class="btn btn-outline-secondary btn-sm" name="action" value="down" title="Turun" {{ 'disabled' if loop.last }}><i class="bi bi-arrow-down"></i></button>
+                            {% if o.value in locked %}
+                            <span class="btn btn-sm text-secondary" title="Dipakai perhitungan dashboard"><i class="bi bi-lock"></i></span>
+                            {% else %}
+                            <button class="btn btn-outline-danger btn-sm" name="action" value="delete" title="Hapus"
+                                    onclick="return confirm('Hapus pilihan ini?{{ ' Masih dipakai data lama (data tidak berubah).' if o.value in used }}')"><i class="bi bi-trash"></i></button>
+                            {% endif %}
+                        </form>
+                    </div>
+                    {% if o.value in used %}<div class="small text-secondary mt-1">Dipakai di data</div>{% endif %}
+                </li>
+                {% else %}
+                <li class="list-group-item text-secondary">Belum ada pilihan.</li>
+                {% endfor %}
+            </ul>
+            <div class="card-body border-top">
+                <form method="post" action="{{ url_for('master.option_save') }}" class="d-flex gap-2">
+                    {{ csrf() }}<input type="hidden" name="kind" value="{{ kind }}">
+                    <input type="text" name="value" class="form-control form-control-sm" placeholder="Pilihan baru" required maxlength="100">
+                    <button class="btn btn-primary btn-sm text-nowrap" name="action" value="add"><i class="bi bi-plus-lg me-1"></i>Tambah</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}Rekrutmen{% endblock %}
+{% block heading %}Rekrutmen{% endblock %}
+{% block heading_icon %}bi-people{% endblock %}
+{% block heading_subtitle %}1 baris = 1 permintaan posisi. Tombol <i class="bi bi-plus-circle"></i> untuk mencatat action plan mingguan (bahan report WA).{% endblock %}
+{% block header_actions %}
+<a href="{{ url_for('dashboard.wa') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-whatsapp me-1"></i>Report WA</a>
+<a href="{{ url_for('recruitment.new') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Tambah posisi</a>
+{% endblock %}
+{% block content %}
+<div class="card">
+    {% include "crud/_filters.html" %}
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead><tr>
+                <th class="ps-3">Req. Date</th><th>Position</th><th>Placement</th><th>Stage</th>
+                <th class="text-end">Cand.</th><th>Status</th><th class="text-end">Umur</th>
+                <th>Action plan terakhir</th><th class="pe-3"></th>
+            </tr></thead>
+            <tbody>
+            {% for r in rows %}
+            {% set last = r.updates[0] if r.updates else none %}
+            <tr>
+                <td class="ps-3 text-nowrap">{{ r.req_date|tgl_pendek }}</td>
+                <td><a href="{{ url_for('recruitment.edit', obj_id=r.id) }}">{{ r.position }}</a>
+                    {% if r.wa_label %}<div class="small text-secondary">WA: {{ r.wa_label }}</div>{% endif %}</td>
+                <td>{{ r.placement or '' }}</td>
+                <td class="text-nowrap">{{ r.stage or '' }}</td>
+                <td class="text-end">{{ r.total_candidate if r.total_candidate is not none else '' }}</td>
+                <td>{{ badge(r.status) }}</td>
+                <td class="text-end text-nowrap">{{ (r.age_days ~ ' hr') if r.age_days is not none else '' }}</td>
+                <td class="small cell-clip">
+                    {% if last %}{{ last.text }}{% if last.date %} <span class="text-secondary">({{ last.date|tgl_pendek }})</span>{% endif %}
+                    {% elif r.remarks %}<span class="text-secondary">{{ r.remarks }}</span>{% endif %}
+                </td>
+                <td class="pe-3 text-end text-nowrap">
+                    <button type="button" class="btn btn-outline-primary btn-sm" title="Tambah action plan"
+                            data-bs-toggle="modal" data-bs-target="#updateModal"
+                            data-action="{{ url_for('recruitment.add_update', obj_id=r.id) }}" data-label="{{ r.label }}">
+                        <i class="bi bi-plus-circle"></i></button>
+                    <a href="{{ url_for('recruitment.edit', obj_id=r.id, next=request.full_path) }}" class="btn btn-outline-secondary btn-sm" title="Ubah"><i class="bi bi-pencil"></i></a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9" class="p-3 text-secondary">Belum ada posisi.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}{% include "recruitment/_update_modal.html" %}{% endblock %}

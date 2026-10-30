@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}User{% endblock %}
+{% block heading %}User{% endblock %}
+{% block heading_icon %}bi-person-gear{% endblock %}
+{% block heading_subtitle %}Hanya IT (administrator) dan Supervisor HRGA yang bisa membuka aplikasi ini{% endblock %}
+{% block content %}
+<div class="card mb-3">
+    <div class="card-header"><i class="bi bi-people me-2"></i>Daftar user</div>
+    <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+        <thead><tr><th class="ps-3">Username</th><th>Nama</th><th>Peran</th><th>Login terakhir</th><th>Status</th><th class="pe-3"></th></tr></thead>
+        <tbody>
+        {% for u in rows %}
+        <tr class="{{ 'text-secondary' if not u.active }}">
+            <td class="ps-3 fw-semibold">{{ u.username }}{% if u.id == current_user.id %} <span class="badge text-bg-dark">Anda</span>{% endif %}</td>
+            <td colspan="2">
+                <form method="post" class="d-flex gap-2" id="uf{{ u.id }}">
+                    {{ csrf() }}<input type="hidden" name="id" value="{{ u.id }}">
+                    <input type="text" name="name" value="{{ u.name }}" class="form-control form-control-sm" required maxlength="100">
+                    <select name="role" class="form-select form-select-sm" style="max-width: 14rem">
+                        {% for key, label in roles.items() %}<option value="{{ key }}" {{ 'selected' if key == u.role }}>{{ label }}</option>{% endfor %}
+                    </select>
+                    <button class="btn btn-outline-secondary btn-sm" name="action" value="update" title="Simpan"><i class="bi bi-check-lg"></i></button>
+                </form>
+            </td>
+            <td class="small text-nowrap">{{ u.last_login_at.strftime('%d/%m/%y %H:%M') if u.last_login_at else '-' }}</td>
+            <td>
+                {% if not u.active %}<span class="badge text-bg-secondary">Nonaktif</span>
+                {% elif u.locked_until and u.locked_until > now_dt %}<span class="badge text-bg-danger">Terkunci</span>
+                {% else %}<span class="badge text-bg-success">Aktif</span>{% endif %}
+            </td>
+            <td class="pe-3 text-end text-nowrap">
+                <form method="post" class="d-inline-flex gap-1">
+                    {{ csrf() }}<input type="hidden" name="id" value="{{ u.id }}">
+                    {% if u.locked_until and u.locked_until > now_dt %}
+                    <button class="btn btn-outline-secondary btn-sm" name="action" value="unlock" title="Buka kunci"><i class="bi bi-unlock"></i></button>
+                    {% endif %}
+                    <button class="btn btn-outline-secondary btn-sm" name="action" value="reset" title="Reset password"
+                            onclick="return confirm('Reset password {{ u.username }}? Password baru tampil sekali.')"><i class="bi bi-key"></i></button>
+                    {% if u.id != current_user.id %}
+                    <button class="btn btn-outline-{{ 'danger' if u.active else 'success' }} btn-sm" name="action" value="toggle"
+                            title="{{ 'Nonaktifkan' if u.active else 'Aktifkan' }}"><i class="bi bi-{{ 'person-x' if u.active else 'person-check' }}"></i></button>
+                    {% endif %}
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+</div>
+
+<div class="card" style="max-width: 640px">
+    <div class="card-header"><i class="bi bi-person-plus me-2"></i>Tambah user</div>
+    <div class="card-body">
+        <form method="post">
+            {{ csrf() }}
+            <div class="form-field-row"><label class="required">Username</label>
+                <div class="field"><input type="text" name="username" class="form-control form-control-sm" required maxlength="50" autocapitalize="none"></div></div>
+            <div class="form-field-row"><label class="required">Nama</label>
+                <div class="field"><input type="text" name="name" class="form-control form-control-sm" required maxlength="100"></div></div>
+            <div class="form-field-row"><label class="required">Peran</label>
+                <div class="field"><select name="role" class="form-select form-select-sm">
+                    {% for key, label in roles.items() %}<option value="{{ key }}" {{ 'selected' if key == 'spv' }}>{{ label }}</option>{% endfor %}
+                </select></div></div>
+            <button class="btn btn-primary btn-sm" name="action" value="create"><i class="bi bi-plus-lg me-1"></i>Buat user</button>
+            <div class="form-text">Password awal dibuat acak dan tampil sekali setelah disimpan.</div>
+        </form>
+    </div>
+</div>
+{% endblock %}

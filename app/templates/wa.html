@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, week_nav %}
+{% block title %}Report WA{% endblock %}
+{% block heading %}Report WA{% endblock %}
+{% block heading_icon %}bi-whatsapp{% endblock %}
+{% block heading_subtitle %}{{ week_label }} · centang isi yang dikirim, lalu Salin dan tempel di WhatsApp{% endblock %}
+{% block header_actions %}
+{{ week_nav('dashboard.wa', week, week_label, prev_week, next_week, this_week) }}
+{% endblock %}
+{% block content %}
+<div class="row g-3">
+    <div class="col-xl-7">
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center"><span><i class="bi bi-people me-2"></i>Action Plan Recruitment</span>
+                <a href="{{ url_for('recruitment.new', next=request.full_path) }}" class="btn btn-primary btn-sm py-0"><i class="bi bi-plus-lg me-1"></i>Posisi</a></div>
+            {% for p in payload.recruitment %}
+            <div class="wa-pos" data-pos="{{ p.id }}">
+                <div class="wa-pos-title">
+                    <input class="form-check-input js-pos" type="checkbox" id="pos{{ p.id }}" checked>
+                    <label for="pos{{ p.id }}">{{ p.label }}</label>
+                    {{ badge(p.status) }}
+                    {% if p.stage %}<span class="small text-secondary fw-normal">{{ p.stage }}</span>{% endif %}
+                    <span class="ms-auto d-flex gap-1">
+                        <button type="button" class="btn btn-outline-primary btn-sm py-0" title="Tambah action plan"
+                                data-bs-toggle="modal" data-bs-target="#updateModal"
+                                data-action="{{ url_for('recruitment.add_update', obj_id=p.id) }}" data-label="{{ p.label }}">
+                            <i class="bi bi-plus-circle"></i></button>
+                        <a href="{{ url_for('recruitment.edit', obj_id=p.id, next=request.full_path) }}" class="btn btn-outline-secondary btn-sm py-0" title="Ubah posisi"><i class="bi bi-pencil"></i></a>
+                    </span>
+                </div>
+                {% for u in p.updates %}
+                <label class="wa-update {{ 'is-old' if not u.in_week }}">
+                    <input class="form-check-input js-upd" type="checkbox" data-upd="{{ u.id }}" {{ 'checked' if u.checked }}>
+                    <span>{{ u.text }}{% if u.date %} <span class="text-secondary">({{ u.date }})</span>{% endif %}</span>
+                </label>
+                {% else %}
+                <div class="wa-update text-secondary">
+                    {% if p.use_remarks %}<i class="bi bi-info-circle"></i><span>Belum ada action plan, dipakai Remarks: <em>{{ p.remarks }}</em></span>
+                    {% else %}<i class="bi bi-exclamation-circle text-warning"></i><span>Belum ada action plan — tidak masuk report.</span>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card-body text-secondary">Tidak ada posisi OPEN.</div>
+            {% endfor %}
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-plus-square me-2"></i>Bagian tambahan (opsional)</div>
+            <ul class="list-group list-group-flush">
+                {% for key, s in payload.sections.items() %}
+                <li class="list-group-item">
+                    <div class="form-check">
+                        <input class="form-check-input js-section" type="checkbox" id="sec{{ key }}" data-section="{{ key }}" {{ 'disabled' if not s.lines }}>
+                        <label class="form-check-label fw-semibold" for="sec{{ key }}">{{ s.title }}</label>
+                        <span class="small text-secondary ms-1">{{ s.lines|length }} baris</span>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="card wa-sticky">
+            <div class="card-header d-flex align-items-center"><span><i class="bi bi-chat-text me-2"></i>Teks report</span>
+                <span class="small fw-normal js-count"></span></div>
+            <div class="card-body">
+                <textarea id="waText" class="form-control wa-preview mb-2" spellcheck="false"></textarea>
+                <div class="form-text mb-2">Teks bisa diedit langsung sebelum disalin. Mengubah centang akan menyusun ulang teks.</div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" id="copyBtn" class="btn btn-primary btn-sm"><i class="bi bi-clipboard me-1"></i>Salin teks</button>
+                    <button type="button" id="rebuildBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-repeat me-1"></i>Susun ulang</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{% include "recruitment/_update_modal.html" %}
+<script>
+(function () {
+    "use strict";
+
+    const data = {{ payload|tojson }};
+    const text = document.getElementById("waText");
+    const count = document.querySelector(".js-count");
+
+    function sectionTitle(title) {
+        return title + " - " + data.week_title + " :";
+    }
+
+    function build() {
+        const lines = [data.title];
+        data.recruitment.forEach(function (p) {
+            const box = document.querySelector('.wa-pos[data-pos="' + p.id + '"]');
+            if (!box || !box.querySelector(".js-pos").checked) {
+                return;
+            }
+            const chosen = new Set(Array.from(box.querySelectorAll(".js-upd:checked")).map(el => Number(el.dataset.upd)));
+            const parts = p.updates.filter(u => chosen.has(u.id))
+                .map(u => u.text + (u.date ? " (" + u.date + ")" : ""));
+            if (!parts.length && p.use_remarks) {
+                parts.push(p.remarks);
+            }
+            if (parts.length) {
+                lines.push("* " + p.label + " : " + parts.join("; "));
+            }
+        });
+        if (lines.length === 1) {
+            lines.push("* -");
+        }
+
+        document.querySelectorAll(".js-section:checked").forEach(function (el) {
+            const s = data.sections[el.dataset.section];
+            if (!s || !s.lines.length) {
+                return;
+            }
+            lines.push("", sectionTitle(s.title));
+            s.lines.forEach(l => lines.push("* " + l));
+        });
+
+        // Baris kosong setelah judul, seperti format WA selama ini.
+        lines.splice(1, 0, "");
+        text.value = lines.join("\n");
+        autosize();
+        count.textContent = (lines.filter(l => l.startsWith("* ")).length) + " poin";
+    }
+
+    function autosize() {
+        text.style.height = "auto";
+        text.style.height = Math.max(420, text.scrollHeight + 4) + "px";
+    }
+
+    document.querySelectorAll(".js-pos, .js-upd, .js-section").forEach(el => el.addEventListener("change", build));
+    document.getElementById("rebuildBtn").addEventListener("click", build);
+    text.addEventListener("input", autosize);
+
+    // Centang posisi ikut mati kalau semua update-nya dimatikan, dan sebaliknya.
+    document.querySelectorAll(".wa-pos").forEach(function (box) {
+        const pos = box.querySelector(".js-pos");
+        box.querySelectorAll(".js-upd").forEach(function (el) {
+            el.addEventListener("change", function () {
+                if (el.checked) {
+                    pos.checked = true;
+                }
+            });
+        });
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", function () {
+        const btn = this;
+        function done() {
+            btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Tersalin';
+            setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard me-1"></i>Salin teks'; }, 1800);
+        }
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text.value).then(done);
+        } else {
+            // http://192.168.x.x bukan "secure context": pakai cara lama.
+            text.select();
+            document.execCommand("copy");
+            text.setSelectionRange(0, 0);
+            done();
+        }
+    });
+
+    build();
+})();
+</script>
+{% endblock %}

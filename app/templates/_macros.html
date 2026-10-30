@@ -1,0 +1,80 @@
+{% macro csrf() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{% macro badge(value) -%}
+{%- if value -%}
+{%- set colors = {
+    'OPEN': 'primary', 'HOLD': 'warning', 'CLOSED': 'secondary',
+    'Selesai': 'success', 'Pending': 'warning', 'In Progress': 'info',
+    'On Track': 'success', 'Perlu Perhatian': 'warning', 'Kritis': 'danger',
+    'Open': 'danger', 'On Progress': 'warning', 'Closed': 'success'} -%}
+<span class="badge text-bg-{{ colors.get(value, 'secondary') }}">{{ value }}</span>
+{%- else -%}<span class="text-secondary">-</span>{%- endif -%}
+{%- endmacro %}
+
+{# Satu field form, gaya "RATAKAN FIELD" (label di samping field). #}
+{% macro field(f, obj) -%}
+{%- set value = obj[f.name] if obj is not none else none -%}
+<div class="form-field-row">
+    <label for="f_{{ f.name }}" class="{{ 'required' if f.required }}">{{ f.label }}</label>
+    <div class="field">
+        {% if f.type == 'textarea' %}
+        <textarea id="f_{{ f.name }}" name="{{ f.name }}" rows="3" class="form-control form-control-sm" {{ 'required' if f.required }}>{{ value or '' }}</textarea>
+        {% elif f.type == 'date' %}
+        <input type="date" id="f_{{ f.name }}" name="{{ f.name }}" class="form-control form-control-sm" value="{{ value.isoformat() if value else '' }}" {{ 'required' if f.required }}>
+        {% elif f.type in ('int', 'money') %}
+        <input type="number" id="f_{{ f.name }}" name="{{ f.name }}" step="1" class="form-control form-control-sm" value="{{ value if value is not none else '' }}" {{ 'required' if f.required }}>
+        {% elif f.type == 'float' %}
+        <input type="number" id="f_{{ f.name }}" name="{{ f.name }}" step="0.01" class="form-control form-control-sm" value="{{ value if value is not none else '' }}" {{ 'required' if f.required }}>
+        {% elif f.type == 'select' %}
+        {% set choices = f.choices or options(f.kind) %}
+        <select id="f_{{ f.name }}" name="{{ f.name }}" class="form-select form-select-sm" {{ 'required' if f.required }}>
+            <option value="">-</option>
+            {% for c in choices %}<option {{ 'selected' if c == value }}>{{ c }}</option>{% endfor %}
+            {% if value and value not in choices %}<option selected>{{ value }}</option>{% endif %}
+        </select>
+        {% elif f.type == 'check' %}
+        <div class="btn-group btn-group-sm" role="group">
+            {% for v, label in [('v', 'Sudah'), ('', 'Belum'), ('-', 'Tidak perlu')] %}
+            <input type="radio" class="btn-check" name="{{ f.name }}" id="f_{{ f.name }}_{{ loop.index }}" value="{{ v }}" {{ 'checked' if (value or '') == v }}>
+            <label class="btn btn-outline-secondary" for="f_{{ f.name }}_{{ loop.index }}">{{ label }}</label>
+            {% endfor %}
+        </div>
+        {% else %}
+        <input type="text" id="f_{{ f.name }}" name="{{ f.name }}" class="form-control form-control-sm" value="{{ value or '' }}" {{ 'required' if f.required }} {{ ('maxlength=' ~ f.limit) if f.limit }}>
+        {% endif %}
+        {% if f.help %}<div class="form-text">{{ f.help }}</div>{% endif %}
+    </div>
+</div>
+{%- endmacro %}
+
+{# Isi sel tabel sesuai format kolom. #}
+{% macro cell(col, row) -%}
+{%- set v = row[col.attr] if col.attr else none -%}
+{%- if col.fmt == 'tgl' -%}{{ v|tgl_pendek }}
+{%- elif col.fmt == 'rupiah' -%}{{ v|rupiah if v else '' }}
+{%- elif col.fmt == 'kg' -%}{{ v|angka(2) }}
+{%- elif col.fmt == 'pct' -%}{{ (v ~ '%') if v is not none else '' }}
+{%- elif col.fmt == 'badge' -%}{{ badge(v) }}
+{%- else -%}{{ v if v is not none else '' }}{%- endif -%}
+{%- endmacro %}
+
+{% macro delete_button(url, label='Hapus', confirm='Hapus data ini?') -%}
+<form method="post" action="{{ url }}" class="d-inline" onsubmit="return confirm('{{ confirm }}')">
+    {{ csrf() }}
+    <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash me-1"></i>{{ label }}</button>
+</form>
+{%- endmacro %}
+
+{# Pemilih minggu laporan: < minggu lalu | tanggal | minggu depan > #}
+{% macro week_nav(endpoint, week, week_label, prev_week, next_week, this_week) -%}
+<form method="get" action="{{ url_for(endpoint) }}" class="week-nav">
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for(endpoint, week=prev_week.isoformat()) }}" title="Minggu sebelumnya"><i class="bi bi-chevron-left"></i></a>
+    <input type="date" name="week" value="{{ week.isoformat() }}" class="form-control form-control-sm" onchange="this.form.submit()" aria-label="Pilih minggu">
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for(endpoint, week=next_week.isoformat()) }}" title="Minggu berikutnya"><i class="bi bi-chevron-right"></i></a>
+    {% if week != this_week %}
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for(endpoint) }}">Minggu laporan</a>
+    {% endif %}
+</form>
+{%- endmacro %}

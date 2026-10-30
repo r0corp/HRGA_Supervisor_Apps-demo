@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Audit Log{% endblock %}
+{% block heading %}Audit Log{% endblock %}
+{% block heading_icon %}bi-clock-history{% endblock %}
+{% block heading_subtitle %}300 perubahan terakhir{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+        <thead><tr><th class="ps-3">Waktu</th><th>User</th><th>Data</th><th>Aksi</th><th class="pe-3">Detail</th></tr></thead>
+        <tbody>
+        {% for a in rows %}
+        <tr><td class="ps-3 text-nowrap small">{{ a.at.strftime('%d/%m/%y %H:%M') }}</td>
+            <td>{{ a.user.name if a.user else '-' }}</td>
+            <td>{{ a.entity }}{{ (' #' ~ a.entity_id) if a.entity_id }}</td>
+            <td>{{ a.action }}</td>
+            <td class="pe-3 small text-secondary cell-clip text-break">{{ a.detail or '' }}</td></tr>
+        {% else %}
+        <tr><td colspan="5" class="p-3 text-secondary">Belum ada.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+</div>
+{% endblock %}

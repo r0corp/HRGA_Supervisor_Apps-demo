@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, delete_button %}
+{% block title %}Head Count{% endblock %}
+{% block heading %}{{ 'Update head count' if not snap else 'Head count ' ~ (snap.date|tgl) }}{% endblock %}
+{% block heading_icon %}bi-diagram-3{% endblock %}
+{% block heading_subtitle %}{{ 'Angka diisi dari snapshot terakhir - cukup ubah yang berubah. Snapshot lama tetap tersimpan.' if not snap else 'Ubah snapshot ini' }}{% endblock %}
+{% block header_actions %}
+<a href="{{ url_for('master.headcount') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Kembali</a>
+{% endblock %}
+{% block content %}
+<form method="post">
+    {{ csrf() }}
+    <div class="card mb-3" style="max-width: 860px">
+        <div class="card-body">
+            <div class="form-field-row"><label class="required">Tanggal update data</label>
+                <div class="field"><input type="date" name="date" value="{{ (snap.date if snap else today).isoformat() }}" class="form-control form-control-sm" required></div></div>
+            <div class="form-field-row mb-0"><label>Catatan</label>
+                <div class="field"><input type="text" name="note" value="{{ snap.note if snap and snap.note else '' }}" class="form-control form-control-sm" maxlength="500"></div></div>
+        </div>
+    </div>
+    <div class="row g-3">
+        {% for g, label in C.HEADCOUNT_GROUPS %}
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-header d-flex"><span>{{ label }}</span><span class="js-total" data-group="{{ g }}"></span></div>
+                <div class="card-body p-2">
+                    <table class="table table-sm table-borderless mb-1 hc-table"><tbody class="js-rows" data-group="{{ g }}">
+                        {% for name, count in (base.rows(g) if base else []) %}
+                        <tr><td><input type="text" name="{{ g }}_name" value="{{ name }}" class="form-control form-control-sm"></td>
+                            <td style="width: 5.5rem"><input type="number" name="{{ g }}_count" value="{{ count }}" min="0" class="form-control form-control-sm text-end js-count"></td></tr>
+                        {% endfor %}
+                    </tbody></table>
+                    <button type="button" class="btn btn-outline-secondary btn-sm w-100 js-add" data-group="{{ g }}"><i class="bi bi-plus-lg me-1"></i>Baris</button>
+                    <div class="form-text">Kosongkan nama untuk menghapus baris.</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="mt-3"><button class="btn btn-primary btn-sm"><i class="bi bi-check-lg me-1"></i>Simpan</button></div>
+</form>
+{% if snap %}<div class="mt-3">{{ delete_button(url_for('master.headcount_delete', snap_id=snap.id), 'Hapus snapshot') }}</div>{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+    function totals() {
+        document.querySelectorAll(".js-rows").forEach(function (body) {
+            let sum = 0;
+            body.querySelectorAll(".js-count").forEach(el => sum += Number(el.value || 0));
+            document.querySelector('.js-total[data-group="' + body.dataset.group + '"]').textContent = sum;
+        });
+    }
+    document.addEventListener("input", function (ev) {
+        if (ev.target.classList.contains("js-count")) {
+            totals();
+        }
+    });
+    document.querySelectorAll(".js-add").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            const g = btn.dataset.group;
+            const tr = document.createElement("tr");
+            tr.innerHTML = '<td><input type="text" name="' + g + '_name" class="form-control form-control-sm"></td>' +
+                '<td style="width: 5.5rem"><input type="number" name="' + g + '_count" value="0" min="0" class="form-control form-control-sm text-end js-count"></td>';
+            document.querySelector('.js-rows[data-group="' + g + '"]').appendChild(tr);
+            tr.querySelector("input").focus();
+        });
+    });
+    totals();
+})();
+</script>
+{% endblock %}

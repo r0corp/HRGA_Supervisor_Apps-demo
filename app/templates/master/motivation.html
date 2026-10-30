@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Motivasi{% endblock %}
+{% block heading %}Kata Motivasi Mingguan{% endblock %}
+{% block heading_icon %}bi-chat-quote{% endblock %}
+{% block heading_subtitle %}Tampil di dashboard. Minggu yang tidak diisi khusus memakai bank kata secara bergiliran.{% endblock %}
+{% block content %}
+<div class="row g-3">
+    <div class="col-xl-6">
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-pencil-square me-2"></i>Motivasi khusus per minggu</div>
+            <div class="card-body">
+                <form method="post">
+                    {{ csrf() }}
+                    <div class="form-field-row"><label class="required">Minggu (Senin)</label>
+                        <div class="field"><input type="date" name="week_start" value="{{ week.isoformat() }}" class="form-control form-control-sm" required></div></div>
+                    <div class="form-field-row"><label>Kata motivasi</label>
+                        <div class="field"><textarea name="text" rows="3" class="form-control form-control-sm"></textarea>
+                            <div class="form-text">Kosongkan lalu simpan untuk menghapus motivasi khusus minggu itu.</div></div></div>
+                    <div class="form-field-row"><label>Dari</label>
+                        <div class="field"><input type="text" name="author" value="HRGA" class="form-control form-control-sm" maxlength="100"></div></div>
+                    <button class="btn btn-primary btn-sm"><i class="bi bi-check-lg me-1"></i>Simpan</button>
+                </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><i class="bi bi-calendar-week me-2"></i>Sudah diisi</div>
+            <ul class="list-group list-group-flush">
+                {% for m in rows %}
+                <li class="list-group-item"><div class="small text-secondary">{{ m.week_start|tgl }}{{ ' · ' ~ m.author if m.author }}</div>{{ m.text }}</li>
+                {% else %}
+                <li class="list-group-item text-secondary">Belum ada.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-collection me-2"></i>Bank kata motivasi (bergiliran)</div>
+            <ul class="list-group list-group-flush">
+                {% for o in bank %}
+                <li class="list-group-item d-flex gap-2 align-items-start">
+                    <span class="text-secondary small" style="width: 1.6rem">{{ loop.index }}</span>
+                    <span class="flex-grow-1">{{ o.value }}{% if o.id == current %} <span class="badge text-bg-dark ms-1">minggu ini</span>{% endif %}</span>
+                    <form method="post" action="{{ url_for('master.option_save') }}" onsubmit="return confirm('Hapus dari bank?')">
+                        {{ csrf() }}<input type="hidden" name="kind" value="motivation_bank"><input type="hidden" name="id" value="{{ o.id }}">
+                        <button class="btn btn-outline-danger btn-sm py-0" name="action" value="delete" title="Hapus"><i class="bi bi-trash"></i></button>
+                    </form>
+                </li>
+                {% else %}
+                <li class="list-group-item text-secondary">Bank masih kosong; dashboard memakai kalimat bawaan.</li>
+                {% endfor %}
+            </ul>
+            <div class="card-body border-top">
+                <form method="post" action="{{ url_for('master.option_save') }}" class="d-flex gap-2">
+                    {{ csrf() }}<input type="hidden" name="kind" value="motivation_bank">
+                    <input type="text" name="value" class="form-control form-control-sm" placeholder="Kalimat baru" required maxlength="500">
+                    <button class="btn btn-primary btn-sm text-nowrap" name="action" value="add"><i class="bi bi-plus-lg me-1"></i>Tambah</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

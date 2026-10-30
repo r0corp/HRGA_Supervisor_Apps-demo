@@ -1,0 +1,24 @@
+{# Filter periode / status / cari untuk daftar data. #}
+<form method="get" class="filter-bar">
+    {% if e.date_field %}
+    <select name="period" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="all" {{ 'selected' if period == 'all' }}>Semua tanggal</option>
+        <option value="week" {{ 'selected' if period == 'week' }}>Per minggu</option>
+        <option value="month" {{ 'selected' if period == 'month' }}>Per bulan</option>
+    </select>
+    {% if period == 'week' %}
+    <input type="date" name="week" value="{{ week.isoformat() }}" class="form-control form-control-sm" onchange="this.form.submit()" aria-label="Minggu">
+    {% elif period == 'month' %}
+    <input type="month" name="month" value="{{ month.strftime('%Y-%m') }}" class="form-control form-control-sm" onchange="this.form.submit()" aria-label="Bulan">
+    {% endif %}
+    {% endif %}
+    {% if e.status_field %}
+    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">Semua status</option>
+        {% for s in (statuses or ['OPEN', 'CLOSED']) %}<option {{ 'selected' if s == status }}>{{ s }}</option>{% endfor %}
+    </select>
+    {% endif %}
+    <input type="search" name="q" value="{{ term }}" placeholder="Cari…" class="form-control form-control-sm filter-search">
+    <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-search"></i></button>
+    <span class="ms-auto small text-secondary">{{ rows|length }} baris</span>
+</form>

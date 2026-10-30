@@ -1,0 +1,32 @@
+{% extends "crud/list.html" %}
+{% from "_macros.html" import csrf %}
+{% block above %}
+<div class="row g-3 mb-3">
+    <div class="col-md-5">
+        <div class="card dashboard-kpi-card"><div class="card-body">
+            <div>
+                <div class="dashboard-kpi-label">Total kumulatif s/d hari ini</div>
+                <div class="dashboard-kpi-value">{{ total_all|angka(2) }} <small class="fs-6 text-secondary">kg</small></div>
+            </div>
+            <div class="dashboard-kpi-icon dashboard-kpi-icon-primary"><i class="bi bi-recycle"></i></div>
+        </div></div>
+    </div>
+    <div class="col-md-7">
+        <div class="card h-100"><div class="card-body">
+            <form method="post" action="{{ url_for('scrap.opening') }}" class="row g-2 align-items-end">
+                {{ csrf() }}
+                <div class="col-sm-4">
+                    <label class="form-label small mb-1">Saldo awal kumulatif (kg)</label>
+                    <input type="number" step="0.01" name="opening" value="{{ opening }}" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-sm-4">
+                    <label class="form-label small mb-1">Per tanggal</label>
+                    <input type="date" name="opening_date" value="{{ opening_date }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-sm-4"><button class="btn btn-outline-secondary btn-sm w-100">Simpan saldo awal</button></div>
+                <div class="col-12 form-text mt-1">Sama dengan "Total Last Week" pada report terakhir sebelum memakai aplikasi. Isi sekali saja.</div>
+            </form>
+        </div></div>
+    </div>
+</div>
+{% endblock %}

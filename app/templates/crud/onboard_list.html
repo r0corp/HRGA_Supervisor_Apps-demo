@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}Onboarding{% endblock %}
+{% block heading %}Onboarding{% endblock %}
+{% block heading_icon %}bi-person-check{% endblock %}
+{% block heading_subtitle %}Karyawan baru &amp; kelengkapan onboarding. Klik kotak checklist: kosong → sudah → tidak perlu.{% endblock %}
+{% block header_actions %}
+<a href="{{ url_for('onboard.new') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Tambah</a>
+{% endblock %}
+{% block content %}
+<div class="card">
+    {% include "crud/_filters.html" %}
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead><tr>
+                <th class="ps-3">Nama</th><th>Posisi</th><th>Placement</th><th>Tgl Join</th>
+                {% for _f, label in C.ONBOARD_CHECKS %}<th class="text-center small" title="{{ label }}">{{ label }}</th>{% endfor %}
+                <th class="text-center">Lengkap</th><th>Status</th><th class="pe-3"></th>
+            </tr></thead>
+            <tbody>
+            {% for row in rows %}
+            {% set done, need = row.completeness %}
+            <tr>
+                <td class="ps-3"><a href="{{ url_for('onboard.edit', obj_id=row.id) }}">{{ row.name }}</a>
+                    {% if row.phone or row.email %}<div class="small text-secondary">{{ row.phone or '' }}{{ ' · ' if row.phone and row.email }}{{ row.email or '' }}</div>{% endif %}</td>
+                <td>{{ row.position }}</td>
+                <td>{{ row.placement or '' }}</td>
+                <td class="text-nowrap">{{ row.hire_date|tgl_pendek }}</td>
+                {% for f, label in C.ONBOARD_CHECKS %}
+                {% set v = row[f] %}
+                <td class="text-center">
+                    <button type="button" class="chk {{ 'is-done' if v == 'v' else ('is-na' if v == '-') }}" title="{{ label }}"
+                            data-url="{{ url_for('onboard.toggle_check', obj_id=row.id, field=f) }}">
+                        {%- if v == 'v' %}<i class="bi bi-check-lg"></i>{% elif v == '-' %}–{% endif -%}
+                    </button>
+                </td>
+                {% endfor %}
+                <td class="text-center text-nowrap"><span class="js-done">{{ done }}</span>/<span class="js-need">{{ need }}</span></td>
+                <td>{{ badge(row.status) }}</td>
+                <td class="pe-3 text-end"><a href="{{ url_for('onboard.edit', obj_id=row.id, next=request.full_path) }}" class="btn btn-outline-secondary btn-sm" title="Ubah"><i class="bi bi-pencil"></i></a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="16" class="p-3 text-secondary">Belum ada data.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    document.querySelectorAll(".chk[data-url]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            const body = new URLSearchParams({ csrf_token: "{{ csrf_token() }}" });
+            fetch(btn.dataset.url, { method: "POST", body: body, headers: { "X-Requested-With": "fetch" } })
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(function (data) {
+                    btn.classList.toggle("is-done", data.value === "v");
+                    btn.classList.toggle("is-na", data.value === "-");
+                    btn.innerHTML = data.value === "v" ? '<i class="bi bi-check-lg"></i>' : (data.value === "-" ? "–" : "");
+                    const tr = btn.closest("tr");
+                    tr.querySelector(".js-done").textContent = data.done;
+                    tr.querySelector(".js-need").textContent = data.need;
+                })
+                .catch(() => alert("Gagal menyimpan, coba muat ulang halaman."));
+        });
+    });
+</script>
+{% endblock %}

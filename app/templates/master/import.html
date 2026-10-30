@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Impor Excel{% endblock %}
+{% block heading %}Impor dari Excel{% endblock %}
+{% block heading_icon %}bi-file-earmark-arrow-up{% endblock %}
+{% block heading_subtitle %}Pindahkan isi template "Weekly Report HRGA.xlsx" ke aplikasi (biasanya cukup sekali){% endblock %}
+{% block content %}
+{% set filled = counts.values()|sum %}
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-upload me-2"></i>Upload file</div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {{ csrf() }}
+                    <div class="form-field-row"><label class="required">File Excel</label>
+                        <div class="field"><input type="file" name="file" accept=".xlsx,.xlsm" class="form-control form-control-sm" required></div></div>
+                    {% if filled %}
+                    <div class="alert alert-warning small py-2">
+                        <i class="bi bi-exclamation-triangle me-1"></i>Database sudah berisi {{ filled }} baris data. Impor hanya bisa dengan
+                        mengganti semua data (Rekrutmen, Onboarding, Head Count, GA, Scrap, Site, Issue, Motivasi).
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="replace" value="1" id="replace">
+                        <label class="form-check-label" for="replace">Hapus data yang ada &amp; ganti dengan isi Excel</label>
+                    </div>
+                    {% endif %}
+                    <button class="btn btn-primary btn-sm" {% if filled %}onclick="return document.getElementById('replace').checked ? confirm('Semua data di aplikasi diganti isi Excel. Lanjut?') : (alert('Centang dulu ganti data yang ada.'), false)"{% endif %}>
+                        <i class="bi bi-file-earmark-arrow-up me-1"></i>Impor</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-info-circle me-2"></i>Yang diimpor</div>
+            <ul class="list-group list-group-flush small">
+                <li class="list-group-item"><b>Rekrutmen</b> → posisi (Remarks tetap di kolom Remarks)</li>
+                <li class="list-group-item"><b>Onboard</b> → karyawan baru + checklist (√ / -)</li>
+                <li class="list-group-item"><b>Headcount</b> → 1 snapshot per "Tanggal update data"</li>
+                <li class="list-group-item"><b>GA</b>, <b>Site Project</b>, <b>Issue &amp; Action</b>, <b>Scrap</b> (+ saldo awal)</li>
+                <li class="list-group-item"><b>Motivasi</b> → per minggu + bank kata</li>
+                <li class="list-group-item"><b>Daftar</b> → pilihan dropdown yang belum ada ditambahkan</li>
+            </ul>
+            <div class="card-body small text-secondary border-top">Data saat ini:
+                {% for table, n in counts.items() %}{{ table }} {{ n }}{{ ', ' if not loop.last }}{% endfor %}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

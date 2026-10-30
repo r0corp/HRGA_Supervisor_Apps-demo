@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Head Count{% endblock %}
+{% block heading %}Manpower / Head Count{% endblock %}
+{% block heading_icon %}bi-diagram-3{% endblock %}
+{% block heading_subtitle %}Snapshot angka per tanggal; dashboard memakai snapshot terakhir s/d akhir minggu laporan{% endblock %}
+{% block header_actions %}
+<a href="{{ url_for('master.headcount_form') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Update head count</a>
+{% endblock %}
+{% block content %}
+{% if latest %}
+{% set total = latest.total('entity') %}
+<div class="row g-3 mb-3">
+    {% for g, label in C.HEADCOUNT_GROUPS %}
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-header d-flex"><span>{{ label }}</span><span>{{ latest.total(g) }}</span></div>
+            <ul class="list-group list-group-flush small">
+                {% for name, count in latest.rows(g) %}
+                <li class="list-group-item d-flex justify-content-between py-1"><span>{{ name }}</span><span class="fw-semibold">{{ count }}</span></li>
+                {% endfor %}
+            </ul>
+            {% if latest.rows(g) and latest.total(g) != total %}
+            <div class="card-footer small text-danger">Selisih {{ latest.total(g) - total }} dari total entitas ({{ total }})</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+<div class="card">
+    <div class="card-header"><i class="bi bi-clock-history me-2"></i>Riwayat snapshot</div>
+    <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+        <thead><tr><th class="ps-3">Tanggal data</th><th class="text-end">Total (entitas)</th>
+            {% for _g, label in C.HEADCOUNT_GROUPS[1:] %}<th class="text-end">{{ label }}</th>{% endfor %}<th>Catatan</th><th class="pe-3"></th></tr></thead>
+        <tbody>
+        {% for s in snaps %}
+        <tr><td class="ps-3"><a href="{{ url_for('master.headcount_form', snap_id=s.id) }}">{{ s.date|tgl }}</a></td>
+            <td class="text-end fw-semibold">{{ s.total('entity') }}</td>
+            {% for g, _l in C.HEADCOUNT_GROUPS[1:] %}<td class="text-end">{{ s.total(g) }}</td>{% endfor %}
+            <td class="small text-secondary">{{ s.note or '' }}</td>
+            <td class="pe-3 text-end"><a href="{{ url_for('master.headcount_form', snap_id=s.id) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i></a></td></tr>
+        {% else %}
+        <tr><td colspan="7" class="p-3 text-secondary">Belum ada data head count.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+</div>
+{% endblock %}

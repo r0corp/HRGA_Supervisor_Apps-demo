@@ -1,0 +1,335 @@
+/* ============================================================
+   THEME TERPUSAT - SATU-SATUNYA SUMBER WARNA DARK MODE
+   (diambil dari Asset Tracker Simple, bagian generiknya saja)
+   ============================================================
+
+   Light mode = biru (default). Dark mode = kartu gelap dengan
+   aksen ungu (warna HRGA, #7C3AED). Semua override [data-bs-theme="dark"]
+   ditulis di file ini, BUKAN di <style> template.
+
+   Palet baku:
+     - Kartu : #1b1e27 (utama), #20232c (kotak di dalam kartu)
+     - Hover : #262933
+     - Border tipis : #2c2f38
+     - Divider sangat tipis : rgba(255,255,255,0.08)
+     - Teks muted : #9aa0ac
+     - Teks utama : #f1f3f5 / #e9ecef
+     - Aksen ungu : #8b5cf6, #7c3aed (hover), #6d28d9 (gradient)
+   ============================================================ */
+
+
+/* ============================================================
+   1. WARNA DASAR & KOMPONEN BOOTSTRAP
+   ============================================================ */
+
+:root[data-bs-theme="dark"] {
+    --bs-primary: #8b5cf6;
+    --bs-primary-rgb: 139, 92, 246;
+    --bs-primary-text-emphasis: #c4b5fd;
+    --bs-primary-bg-subtle: #2e1065;
+    --bs-primary-border-subtle: #4c1d95;
+    --bs-link-color: #a78bfa;
+    --bs-link-color-rgb: 167, 139, 250;
+    --bs-link-hover-color: #c4b5fd;
+    --bs-link-hover-color-rgb: 196, 181, 253;
+}
+
+[data-bs-theme="dark"] .btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #8b5cf6;
+    --bs-btn-border-color: #8b5cf6;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #7c3aed;
+    --bs-btn-hover-border-color: #7c3aed;
+    --bs-btn-focus-shadow-rgb: 139, 92, 246;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #7c3aed;
+    --bs-btn-active-border-color: #7c3aed;
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #8b5cf6;
+    --bs-btn-disabled-border-color: #8b5cf6;
+}
+
+[data-bs-theme="dark"] .btn-outline-primary {
+    --bs-btn-color: #a78bfa;
+    --bs-btn-border-color: #8b5cf6;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #8b5cf6;
+    --bs-btn-hover-border-color: #8b5cf6;
+    --bs-btn-focus-shadow-rgb: 139, 92, 246;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #8b5cf6;
+    --bs-btn-active-border-color: #8b5cf6;
+}
+
+[data-bs-theme="dark"] .btn-outline-secondary {
+    --bs-btn-color: #e9ecef;
+    --bs-btn-border-color: #3a3f4b;
+    --bs-btn-hover-color: #f1f3f5;
+    --bs-btn-hover-bg: #262933;
+    --bs-btn-hover-border-color: #4a4f5b;
+    --bs-btn-active-color: #f1f3f5;
+    --bs-btn-active-bg: #262933;
+    --bs-btn-active-border-color: #4a4f5b;
+}
+
+[data-bs-theme="dark"] .page-item.active .page-link {
+    background-color: #8b5cf6;
+    border-color: #8b5cf6;
+}
+
+[data-bs-theme="dark"] .form-check-input:checked {
+    background-color: #8b5cf6;
+    border-color: #8b5cf6;
+}
+
+[data-bs-theme="dark"] .card {
+    background-color: #1b1e27;
+}
+
+[data-bs-theme="dark"] .card-header .btn-primary {
+    --bs-btn-color: #6d28d9;
+    --bs-btn-hover-color: #6d28d9;
+}
+
+@media screen {
+    [data-bs-theme="dark"] thead,
+    [data-bs-theme="dark"] .table-light {
+        background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+    }
+}
+
+/* Sel tabel transparan supaya menyatu dengan warna kartu. */
+[data-bs-theme="dark"] .table {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+    --bs-table-hover-bg: #262933;
+}
+
+[data-bs-theme="dark"] .table tfoot td {
+    background-color: #20232c;
+}
+
+[data-bs-theme="dark"] .list-group {
+    --bs-list-group-bg: transparent;
+    --bs-list-group-border-color: rgba(255, 255, 255, 0.08);
+    --bs-list-group-action-hover-bg: #262933;
+}
+
+[data-bs-theme="dark"] .card-header .text-success,
+[data-bs-theme="dark"] .card-header .text-danger {
+    background: #1b1e27;
+}
+
+
+/* ============================================================
+   2. NAVBAR, SIDEBAR, FOOTER & HEADER KARTU
+   ============================================================ */
+
+/* .app-sidebar.app-sidebar (dobel) supaya menang lawan aturan
+   posisi di style.css yang dimuat sesudah file ini. */
+[data-bs-theme="dark"] .app-header.navbar,
+[data-bs-theme="dark"] .app-sidebar.app-sidebar,
+[data-bs-theme="dark"] .app-footer {
+    background: #1b1e27;
+    border-color: #2c2f38;
+}
+
+html[data-bs-theme="dark"] .sidebar-menu .nav-link.active {
+    background-color: #8b5cf6 !important;
+    color: #fff !important;
+}
+
+html[data-bs-theme="dark"] .sidebar-menu .nav-link.active .nav-icon,
+html[data-bs-theme="dark"] .sidebar-menu .nav-link.active p {
+    color: #fff !important;
+}
+
+[data-bs-theme="dark"] .user-menu-header {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+}
+
+[data-bs-theme="dark"] .user-menu-online-dot {
+    border-color: #6d28d9;
+}
+
+[data-bs-theme="dark"] .user-menu-footer .btn-profile {
+    --bs-btn-color: #a78bfa;
+    --bs-btn-hover-bg: #8b5cf6;
+    --bs-btn-hover-border-color: #8b5cf6;
+}
+
+[data-bs-theme="dark"] .card-header {
+    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+}
+
+/* Header "Putus kontrak" tetap beda dari header biasa (yang di dark
+   mode sudah merah) - dibuat merah tua. */
+[data-bs-theme="dark"] .card-header.text-danger {
+    background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%) !important;
+}
+
+
+/* ============================================================
+   3. PAGE HEADER CARD & CARD HEADER ACCENT
+   ============================================================ */
+
+[data-bs-theme="dark"] .page-header-card {
+    background: #1b1e27;
+    border-color: #2c2f38;
+}
+
+[data-bs-theme="dark"] .page-header-card::before,
+[data-bs-theme="dark"] .card-header-accent::before,
+[data-bs-theme="dark"] .dashboard-kpi-card::before {
+    background: linear-gradient(90deg, #6d28d9 0%, #8b5cf6 35%, #a78bfa 50%, #8b5cf6 65%, #6d28d9 100%);
+}
+
+[data-bs-theme="dark"] .page-header-icon {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.3);
+}
+
+[data-bs-theme="dark"] .page-header-title,
+[data-bs-theme="dark"] .card-header-accent-title {
+    color: #f1f3f5;
+}
+
+[data-bs-theme="dark"] .page-header-subtitle,
+[data-bs-theme="dark"] .card-header-accent-subtitle,
+[data-bs-theme="dark"] .dashboard-kpi-label {
+    color: #9aa0ac;
+}
+
+[data-bs-theme="dark"] .card-header-accent {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-bs-theme="dark"] .card-header-accent-icon,
+[data-bs-theme="dark"] .dashboard-kpi-icon-primary {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+
+/* ============================================================
+   4. KALENDER (Flatpickr)
+   ============================================================ */
+
+[data-bs-theme="dark"] .flatpickr-calendar {
+    background: #1b1e27;
+    border-color: #2c2f38;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+[data-bs-theme="dark"] .flatpickr-calendar.arrowTop::before,
+[data-bs-theme="dark"] .flatpickr-calendar.arrowTop::after {
+    border-bottom-color: #1b1e27;
+}
+
+[data-bs-theme="dark"] .flatpickr-calendar.arrowBottom::before,
+[data-bs-theme="dark"] .flatpickr-calendar.arrowBottom::after {
+    border-top-color: #1b1e27;
+}
+
+[data-bs-theme="dark"] .flatpickr-months .flatpickr-month,
+[data-bs-theme="dark"] .flatpickr-current-month,
+[data-bs-theme="dark"] .flatpickr-current-month input.cur-year,
+[data-bs-theme="dark"] .flatpickr-monthDropdown-months,
+[data-bs-theme="dark"] .flatpickr-weekdays {
+    background: #1b1e27;
+    color: #f1f3f5;
+    fill: #f1f3f5;
+}
+
+[data-bs-theme="dark"] .flatpickr-monthDropdown-months .flatpickr-monthDropdown-month {
+    background: #1b1e27;
+    color: #f1f3f5;
+}
+
+[data-bs-theme="dark"] span.flatpickr-weekday {
+    background: #1b1e27;
+    color: #9aa0ac;
+}
+
+[data-bs-theme="dark"] .flatpickr-day {
+    color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .flatpickr-day.flatpickr-disabled,
+[data-bs-theme="dark"] .flatpickr-day.prevMonthDay,
+[data-bs-theme="dark"] .flatpickr-day.nextMonthDay {
+    color: #4b5160;
+}
+
+[data-bs-theme="dark"] .flatpickr-day:hover {
+    background: #262933;
+}
+
+[data-bs-theme="dark"] .flatpickr-day.today {
+    border-color: #8b5cf6;
+}
+
+[data-bs-theme="dark"] .flatpickr-day.today:hover,
+[data-bs-theme="dark"] .flatpickr-day.today:focus {
+    background: #8b5cf6;
+    color: #fff;
+}
+
+[data-bs-theme="dark"] .flatpickr-day.selected,
+[data-bs-theme="dark"] .flatpickr-day.selected:hover,
+[data-bs-theme="dark"] .flatpickr-day.selected:focus {
+    background: #8b5cf6;
+    border-color: #8b5cf6;
+    color: #fff;
+}
+
+[data-bs-theme="dark"] .flatpickr-prev-month svg,
+[data-bs-theme="dark"] .flatpickr-next-month svg {
+    fill: #e9ecef;
+}
+
+[data-bs-theme="dark"] .numInputWrapper span.arrowUp::after {
+    border-bottom-color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .numInputWrapper span.arrowDown::after {
+    border-top-color: #e9ecef;
+}
+
+
+/* ============================================================
+   6. KHUSUS WEEKLY REPORT
+   ============================================================ */
+
+[data-bs-theme="dark"] .card-header-accent::before {
+    background: linear-gradient(90deg, #6d28d9 0%, #8b5cf6 35%, #a78bfa 50%, #8b5cf6 65%, #6d28d9 100%);
+}
+
+[data-bs-theme="dark"] .card-header-accent-icon {
+    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-bs-theme="dark"] .mini-bar > span {
+    background: #a78bfa;
+}
+
+[data-bs-theme="dark"] .mini-bar.bar-alt > span {
+    background: #6d28d9;
+}
+
+[data-bs-theme="dark"] .motivation-card,
+[data-bs-theme="dark"] .week-nav .week-pill {
+    background: #1b1e27;
+}
+
+[data-bs-theme="dark"] .wa-preview {
+    background: #20232c;
+    color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .card .list-group-item.active {
+    background-color: #6d28d9;
+    border-color: #6d28d9;
+}

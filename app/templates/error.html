@@ -1,0 +1,10 @@
+{% extends "base.html" if current_user.is_authenticated else "error_plain.html" %}
+{% block title %}Error {{ code }}{% endblock %}
+{% block heading %}Error {{ code }}{% endblock %}
+{% block heading_icon %}bi-exclamation-triangle{% endblock %}
+{% block content %}
+<div class="card"><div class="card-body">
+    <p class="mb-3">{{ message }}</p>
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary btn-sm">Kembali ke Dashboard</a>
+</div></div>
+{% endblock %}

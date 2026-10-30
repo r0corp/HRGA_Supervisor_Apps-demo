@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login · HRGA Supervisor Apps</title>
+    <script>
+        (() => {
+            const root = document.documentElement;
+            let stored = null;
+            try {
+                stored = localStorage.getItem("lte-theme");
+            } catch (e) {}
+            // Default selalu terang; tema sistem hanya dipakai kalau
+            // user memilih "Otomatis".
+            let resolved = "light";
+            if (stored === "dark") {
+                resolved = "dark";
+            } else if (stored === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+                resolved = "dark";
+            }
+            root.setAttribute("data-bs-theme", resolved);
+            root.style.colorScheme = resolved;
+        })();
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4.9.1/dist/css/adminlte.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-dark.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* ========================================================
+           LOGIN - desain dari Asset Tracker Simple (latar teknologi
+           animasi + kartu split brand/form).
+        ======================================================== */
+
+        .login-tech-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            background: radial-gradient(circle at 15% 15%, #2e1065 0%, #140a30 45%, #05070f 100%);
+        }
+
+        :root[data-bs-theme="dark"] .login-tech-bg {
+            background: radial-gradient(circle at 15% 15%, #24104f 0%, #100826 45%, #05070f 100%);
+        }
+
+        .login-tech-bg::before {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            background-image:
+                linear-gradient(rgba(167, 139, 250, 0.12) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(167, 139, 250, 0.12) 1px, transparent 1px);
+            background-size: 44px 44px;
+            -webkit-mask-image: radial-gradient(ellipse at center, black 45%, transparent 85%);
+            mask-image: radial-gradient(ellipse at center, black 45%, transparent 85%);
+            animation: loginGridPan 40s linear infinite;
+        }
+
+        :root[data-bs-theme="dark"] .login-tech-bg::before {
+            background-image:
+                linear-gradient(rgba(167, 139, 250, 0.12) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(167, 139, 250, 0.12) 1px, transparent 1px);
+        }
+
+        @keyframes loginGridPan {
+            from { background-position: 0 0, 0 0; }
+            to   { background-position: 220px 220px, 220px 220px; }
+        }
+
+        .login-glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .login-glow-1 { width: 380px; height: 380px; top: -120px; left: -100px; background: #7c3aed; animation: loginFloat1 13s ease-in-out infinite; }
+        .login-glow-2 { width: 320px; height: 320px; bottom: -120px; right: -80px; background: #a78bfa; animation: loginFloat2 15s ease-in-out infinite; }
+        .login-glow-3 { width: 260px; height: 260px; bottom: 12%; left: 6%; background: #7c3aed; opacity: 0.3; animation: loginFloat3 17s ease-in-out infinite; }
+
+        :root[data-bs-theme="dark"] .login-glow-1 { background: #8b5cf6; }
+        :root[data-bs-theme="dark"] .login-glow-2 { background: #a78bfa; }
+        :root[data-bs-theme="dark"] .login-glow-3 { background: #6d28d9; }
+
+        @keyframes loginFloat1 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(35px, 30px); } }
+        @keyframes loginFloat2 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-30px, -25px); } }
+        @keyframes loginFloat3 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(22px, -20px); } }
+
+        .login-particle-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .login-tech-bg::before, .login-glow-1, .login-glow-2, .login-glow-3 { animation: none; }
+        }
+
+        .login-page-wrapper {
+            min-height: 100vh;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-content {
+            width: 100%;
+            max-width: 740px;
+        }
+
+        .login-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12.5px;
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .login-split-card {
+            display: flex;
+            flex-direction: row;
+            border: 0;
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.5);
+            min-height: 440px;
+        }
+
+        .login-brand-panel {
+            position: relative;
+            overflow: hidden;
+            flex: 0 0 42%;
+            padding: 36px 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: linear-gradient(160deg, #7c3aed 0%, #4c1d95 100%);
+            color: #fff;
+        }
+
+        :root[data-bs-theme="dark"] .login-brand-panel {
+            background: linear-gradient(160deg, #8b5cf6 0%, #4c1d95 100%);
+        }
+
+        .login-brand-circle { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.12); pointer-events: none; }
+        .login-brand-circle-1 { width: 260px; height: 260px; bottom: -90px; left: -70px; }
+        .login-brand-circle-2 { width: 150px; height: 150px; bottom: 40px; left: 120px; background: rgba(255, 255, 255, 0.1); }
+        .login-brand-circle-3 { width: 130px; height: 130px; top: -50px; right: -40px; background: rgba(255, 255, 255, 0.08); }
+
+        .login-brand-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-brand-logo {
+            width: 46px;
+            height: 46px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+
+        .login-brand-title {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .login-brand-subtitle {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 16px;
+        }
+
+        .login-brand-desc {
+            font-size: 13px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 260px;
+        }
+
+        .login-form-panel {
+            flex: 1 1 58%;
+            padding: 32px 36px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+        }
+
+        :root[data-bs-theme="dark"] .login-form-panel {
+            background: #1b1e27;
+        }
+
+        .login-form-toolbar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 18px;
+        }
+
+        .login-icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--bs-border-color);
+            background: transparent;
+            color: var(--bs-body-color);
+            font-size: 15px;
+            transition: background 0.15s ease;
+        }
+
+        .login-icon-btn:hover {
+            background: var(--bs-tertiary-bg);
+        }
+
+        .login-form-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-width: 320px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .login-form-title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .login-form-subtitle {
+            color: var(--bs-secondary-color);
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .login-input-group .input-group-text {
+            background: var(--bs-tertiary-bg);
+            border-right: 0;
+            color: var(--bs-secondary-color);
+        }
+
+        .login-input-group .form-control {
+            border-left: 0;
+        }
+
+        .login-input-group .form-control:focus {
+            border-color: var(--bs-border-color);
+            box-shadow: none;
+        }
+
+        .login-input-group:focus-within .input-group-text {
+            border-color: #a78bfa;
+        }
+
+        :root[data-bs-theme="dark"] .login-input-group:focus-within .input-group-text {
+            border-color: #8b5cf6;
+        }
+
+        .login-password-toggle {
+            border-left: 0;
+            color: var(--bs-secondary-color);
+        }
+
+        .login-submit-btn {
+            padding: 10px;
+            font-weight: 700;
+            border-radius: 10px;
+            margin-top: 8px;
+        }
+
+        .login-hint {
+            text-align: center;
+            font-size: 12px;
+            color: var(--bs-secondary-color);
+            margin-top: 16px;
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 860px) {
+            .login-brand-panel { flex-basis: 40%; padding: 32px 24px; }
+            .login-brand-desc { max-width: none; }
+            .login-form-panel { padding: 32px 28px; }
+        }
+
+        @media (max-width: 576px) {
+            .login-split-card { flex-direction: column; min-height: 0; }
+            .login-brand-panel { flex: 0 0 auto; padding: 32px 28px; }
+            .login-form-panel { padding: 32px 26px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-tech-bg" aria-hidden="true">
+    <canvas id="loginParticleCanvas" class="login-particle-canvas"></canvas>
+    <div class="login-glow login-glow-1"></div>
+    <div class="login-glow login-glow-2"></div>
+    <div class="login-glow login-glow-3"></div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<!-- position:fixed supaya muncul/hilangnya pesan tidak menggeser kartu login. -->
+<div class="position-fixed top-0 start-50 translate-middle-x mt-3 px-3" style="z-index: 2000; width: 100%; max-width: 480px;">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show shadow" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="login-page-wrapper">
+    <div class="login-content">
+        <div class="card login-split-card">
+
+            <div class="login-brand-panel">
+                <div class="login-brand-circle login-brand-circle-1"></div>
+                <div class="login-brand-circle login-brand-circle-2"></div>
+                <div class="login-brand-circle login-brand-circle-3"></div>
+                <div class="login-brand-inner">
+                    <div class="login-brand-logo"><i class="bi bi-calendar-week"></i></div>
+                    <div class="login-brand-title">Selamat Datang</div>
+                    <div class="login-brand-subtitle">HRGA Supervisor Apps</div>
+                    <p class="login-brand-desc mb-0">Rekrutmen, onboarding, head count, GA, scrap, site project, dan issue &amp; action plan HRGA dalam satu laporan mingguan.</p>
+                </div>
+            </div>
+
+            <div class="login-form-panel">
+                <div class="login-form-toolbar">
+                    <button type="button" id="loginThemeToggle" class="login-icon-btn" aria-label="Ganti tema">
+                        <i class="bi bi-sun-fill" data-login-theme-icon="light"></i>
+                        <i class="bi bi-moon-stars-fill d-none" data-login-theme-icon="dark"></i>
+                    </button>
+                </div>
+
+                <div class="login-form-body">
+                    <div class="login-form-title">Masuk</div>
+                    <p class="login-form-subtitle">Masukkan username dan password Anda.</p>
+
+                    <form method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <div class="input-group login-input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" id="username" name="username"
+                                       autofocus required autocomplete="username" autocapitalize="none">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group login-input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password"
+                                       required autocomplete="current-password">
+                                <button type="button" class="btn btn-outline-secondary login-password-toggle"
+                                        id="loginTogglePassword" aria-label="Tampilkan password">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 login-submit-btn">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                        </button>
+                    </form>
+
+                    <p class="login-hint">Lupa password? Hubungi IT.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="login-footer">{{ config.APP_ORG or "HRGA Supervisor Apps" }} &copy; {{ now().year }}</footer>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+    "use strict";
+
+    var canvas = document.getElementById("loginParticleCanvas");
+    if (!canvas || !canvas.getContext) {
+        return;
+    }
+
+    var ctx = canvas.getContext("2d");
+    var particles = [];
+    var particleCount = 70;
+    var maxLinkDistance = 130;
+    var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var animationId = null;
+
+    function resizeCanvas() {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+    }
+
+    function createParticles() {
+        particles = [];
+        for (var i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.35,
+                vy: (Math.random() - 0.5) * 0.35,
+                r: Math.random() * 1.6 + 1.1
+            });
+        }
+    }
+
+    function currentAccentColor() {
+        var isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+        return {
+            dot: isDark ? "rgba(196, 181, 253, 0.85)" : "rgba(196, 181, 253, 0.85)",
+            line: isDark ? "167, 139, 250" : "167, 139, 250"
+        };
+    }
+
+    function drawFrame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        var accent = currentAccentColor();
+
+        for (var i = 0; i < particles.length; i++) {
+            var p = particles[i];
+            if (!reduceMotion) {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.x < 0) p.x = canvas.width;
+                if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height;
+                if (p.y > canvas.height) p.y = 0;
+            }
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = accent.dot;
+            ctx.fill();
+        }
+
+        for (var a = 0; a < particles.length; a++) {
+            for (var b = a + 1; b < particles.length; b++) {
+                var dx = particles[a].x - particles[b].x;
+                var dy = particles[a].y - particles[b].y;
+                var distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < maxLinkDistance) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[a].x, particles[a].y);
+                    ctx.lineTo(particles[b].x, particles[b].y);
+                    ctx.strokeStyle = "rgba(" + accent.line + ", " + ((1 - distance / maxLinkDistance) * 0.4) + ")";
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    function step() {
+        drawFrame();
+        animationId = window.requestAnimationFrame(step);
+    }
+
+    function start() {
+        resizeCanvas();
+        createParticles();
+        if (reduceMotion) {
+            drawFrame();
+        } else {
+            step();
+        }
+    }
+
+    window.addEventListener("resize", function () {
+        if (animationId) {
+            window.cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+        start();
+    });
+
+    start();
+})();
+
+(function () {
+    "use strict";
+
+    var root = document.documentElement;
+    var toggleBtn = document.getElementById("loginThemeToggle");
+
+    function syncIcon() {
+        var isDark = root.getAttribute("data-bs-theme") === "dark";
+        toggleBtn.querySelector('[data-login-theme-icon="light"]').classList.toggle("d-none", isDark);
+        toggleBtn.querySelector('[data-login-theme-icon="dark"]').classList.toggle("d-none", !isDark);
+    }
+
+    toggleBtn.addEventListener("click", function () {
+        var next = root.getAttribute("data-bs-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-bs-theme", next);
+        root.style.colorScheme = next;
+        try {
+            localStorage.setItem("lte-theme", next);
+        } catch (e) {}
+        syncIcon();
+    });
+
+    syncIcon();
+})();
+
+(function () {
+    "use strict";
+
+    var toggleBtn = document.getElementById("loginTogglePassword");
+    var passwordInput = document.getElementById("password");
+
+    toggleBtn.addEventListener("click", function () {
+        var isHidden = passwordInput.type === "password";
+        passwordInput.type = isHidden ? "text" : "password";
+        toggleBtn.querySelector("i").className = isHidden ? "bi bi-eye-slash" : "bi bi-eye";
+    });
+})();
+</script>
+</body>
+</html>
